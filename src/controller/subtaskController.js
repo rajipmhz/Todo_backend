@@ -30,10 +30,6 @@ const getSubtasksController=async(req,res)=>{
 
 const updateSubtaskController = async (req, res) => {
   try {
-    console.log("Updating subtask ID:", req.params.id);
-    console.log("User ID:", req.user?.id);
-    console.log("Update data:", req.body);
-
     const subtask = await updateSubtask(req.params.id, req.user.id, req.body);
     res.status(200).json(subtask);
   } catch (err) {

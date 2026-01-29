@@ -5,7 +5,11 @@ const {
   generateAccessToken,
   generateRefreshToken,
 } = require("../services/tokenService");
-const { register, validateUser, findUserById } = require("../services/userService");
+const {
+  register,
+  validateUser,
+  findUserById,
+} = require("../services/userService");
 
 const registerController = async (req, res) => {
   try {
@@ -18,7 +22,8 @@ const registerController = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
   try {
-    if (!req.user) return res.status(401).json({ message: "Not authenticated" });
+    if (!req.user)
+      return res.status(401).json({ message: "Not authenticated" });
     const user = await findUserById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json(user);
@@ -33,17 +38,15 @@ const loginController = async (req, res) => {
     const { email, password } = req.body;
     const user = await validateUser(email, password);
 
-
     const accessToken = generateAccessToken({ id: user.id });
     const refreshToken = await generateRefreshToken({ id: user.id });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", 
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 1 * 24 * 60 * 60 * 1000, 
+      secure: true, 
+      sameSite: "none",
+      maxAge: 1 * 24 * 60 * 60 * 1000,
     });
-
 
     res.status(200).json({
       id: user.id,
@@ -64,13 +67,16 @@ const refreshController = async (req, res) => {
     const storedToken = await RefreshToken.findOne({
       where: { token, revoked: false },
     });
-    if (!storedToken) return res.status(403).json({ message: "Invalid refresh token" });
+    if (!storedToken)
+      return res.status(403).json({ message: "Invalid refresh token" });
 
     let payload;
     try {
       payload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
     } catch {
-      return res.status(403).json({ message: "Expired or invalid refresh token" });
+      return res
+        .status(403)
+        .json({ message: "Expired or invalid refresh token" });
     }
 
     await RefreshToken.update({ revoked: true }, { where: { token } });
@@ -80,8 +86,8 @@ const refreshController = async (req, res) => {
 
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true, 
+      sameSite: "none",
       maxAge: 1 * 24 * 60 * 60 * 1000,
     });
 
@@ -90,7 +96,6 @@ const refreshController = async (req, res) => {
     res.status(401).json({ message: err.message });
   }
 };
-
 
 const logoutController = async (req, res) => {
   try {
@@ -102,9 +107,9 @@ const logoutController = async (req, res) => {
 
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      path:"/",
+      secure: true,
+      sameSite: "none",
+      path: "/",
     });
 
     res.status(204).send();
@@ -113,11 +118,10 @@ const logoutController = async (req, res) => {
   }
 };
 
-
 module.exports = {
   registerController,
   loginController,
   refreshController,
   logoutController,
-  getCurrentUser
+  getCurrentUser,
 };
